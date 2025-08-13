@@ -5,7 +5,6 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:voice/data/notifiers.dart';
-import 'dart:math';
 
 class MicPage extends StatefulWidget {
   const MicPage({super.key});
@@ -52,7 +51,7 @@ class _MicPageState extends State<MicPage> {
   }
 
   void _processPCMData(Uint8List data) {
-    print(data);
+    // print(data);
     final byteData = ByteData.sublistView(data);
     for (int i = 0; i < data.length; i += 2) {
       final sample = byteData.getInt16(i, Endian.little);
@@ -121,7 +120,7 @@ class _MicPageState extends State<MicPage> {
   }
 
   void _runModelInference() {
-    const int inputLength = 16000;
+    const int inputLength = 32000;
 
     List<double> inputData;
     if (_pcmData.length > inputLength) {
@@ -151,16 +150,16 @@ class _MicPageState extends State<MicPage> {
   }
 
   String _compare(List<double> currEmb) {
-    const threshold = 1.0;
-    double minDist = double.infinity;
-    double currDist = 0.0;
+    const threshold = 0.7;
+    double maxSim = 0.0;
     String predRes = "";
     bool notFound = true;
     for (var entry in voicesNotifier.value.entries) {
-      currDist = euclideanDistance(entry.value, currEmb);
-      if (currDist <= threshold && currDist < minDist) {
+      var sim = cosineSimilarity(entry.value, currEmb);
+      print(sim);
+      if (sim > threshold && sim > maxSim) {
         notFound = false;
-        minDist = currDist;
+        maxSim = sim;
         predRes = entry.key;
       }
     }
@@ -311,10 +310,23 @@ class _MicPageState extends State<MicPage> {
   }
 }
 
-double euclideanDistance(List<double> e1, List<double> e2) {
+// double euclideanDistance(List<double> e1, List<double> e2) {
+//   double sum = 0.0;
+//   for (int i = 0; i < e1.length; i++) {
+//     sum += pow((e1[i] - e2[i]), 2);
+//   }
+//   return sqrt(sum);
+// }
+
+double cosineSimilarity(List<double> e1, List<double> e2) {
+  if (e1.length != e2.length) {
+    throw ArgumentError("Vectors must have the same length");
+  }
+
   double sum = 0.0;
   for (int i = 0; i < e1.length; i++) {
-    sum += pow((e1[i] - e2[i]), 2);
+    sum += e1[i] * e2[i];
   }
-  return sqrt(sum);
+
+  return sum; // embedding 已经归一化，点乘即余弦相似度
 }

@@ -1,23 +1,25 @@
-import librosa
-import numpy as np
+
 import tensorflow as tf
-
-from deep_speaker.constants import SAMPLE_RATE
 from deep_speaker.conv_models import DeepSpeakerModel
-from deep_speaker.test import batch_cosine_similarity
+from deep_speaker.constants import SAMPLE_RATE
 
-# Define the model here.
+FIXED_LEN = 2 * SAMPLE_RATE  # 2 秒
+
+# 1. 定义模型
 model = DeepSpeakerModel(pcm_input=True)
-
-# Load the checkpoint.
 model.m.load_weights('ResCNN_triplet_training_checkpoint_265.h5', by_name=True)
 
-model.m.save('saved_model/deep_speaker')
+# 2. 固定输入长度，生成 concrete function
+full_model = tf.function(
+    lambda x: model.m(x),
+    input_signature=[tf.TensorSpec(shape=[1, FIXED_LEN], dtype=tf.float32)]
+)
+concrete_func = full_model.get_concrete_function()
 
-converter = tf.lite.TFLiteConverter.from_saved_model('saved_model/deep_speaker')
-# 选择优化选项，比如浮点16或动态量化
+# 3. 转换 TFLite
+converter = tf.lite.TFLiteConverter.from_concrete_functions([concrete_func])
 converter.optimizations = [tf.lite.Optimize.DEFAULT]
 tflite_model = converter.convert()
 
-with open('deep_speaker.tflite', 'wb') as f:
+with open("deep_speaker_2s.tflite", "wb") as f:
     f.write(tflite_model)
