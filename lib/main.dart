@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:voice/data/notifiers.dart';
-import 'package:voice/examples/simple_recorder.dart';
 import 'package:voice/views/home.dart';
 
 void main() {
