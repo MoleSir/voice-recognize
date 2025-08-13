@@ -16,5 +16,4 @@ A voice recg application
 - https://blog.csdn.net/gitblog_01295/article/details/143045366
 - https://github.com/anarchuser/mic_stream/blob/main/example/lib/main.dart
 - https://yf-cheng.com/zh-cn/p/tts-evaluation-targets/
-
 - https://github.com/philipperemy/deep-speaker
